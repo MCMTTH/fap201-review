@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAP201 - FPGA FE Review Portal</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-dark: #1e293b;
+            --accent-blue: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --correct: #10b981;
+            --incorrect: #ef4444;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 300px;
+            background-color: var(--panel-dark);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chapter-list {
+            list-style: none;
+            overflow-y: auto;
+            flex: 1;
+            padding: 10px;
+        }
+
+        .chapter-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .chapter-item:hover {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--text-main);
+        }
+
+        .chapter-item.active {
+            background-color: var(--accent-blue);
+            color: var(--bg-dark);
+            font-weight: bold;
+        }
+
+        /* Main Content Container */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar & Progress */
+        .top-bar {
+            background-color: var(--panel-dark);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: rgba(56, 189, 248, 0.1);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Dynamic Panel Layout */
+        .display-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .view-section {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        /* Documentation UI Style */
+        .doc-title {
+            font-size: 2rem;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        .doc-meta {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .objectives-box {
+            background-color: rgba(56, 189, 248, 0.05);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 30px;
+        }
+
+        .objectives-box h4 {
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .objectives-box ul {
+            padding-left: 20px;
+            color: var(--text-muted);
+        }
+
+        .doc-section {
+            margin-bottom: 35px;
+        }
+
+        .doc-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            padding-bottom: 5px;
+        }
+
+        .doc-section p {
+            line-height: 1.7;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+
+        .highlight-term {
+            color: var(--accent-blue);
+            font-weight: 600;
+            background-color: rgba(56, 189, 248, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Matrix Table UI */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .matrix-table th, .matrix-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        .matrix-table th {
+            background-color: rgba(51, 65, 85, 0.5);
+            color: var(--accent-blue);
+        }
+
+        /* Quiz UI Style */
+        .quiz-card {
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .quiz-question {
+            font-size: 1.15rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .option-item:hover {
+            border-color: var(--accent-blue);
+            background-color: rgba(56, 189, 248, 0.02);
+        }
+
+        .option-item.correct {
+            border-color: var(--correct);
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--correct);
+        }
+
+        .option-item.incorrect {
+            border-color: var(--incorrect);
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--incorrect);
+        }
+
+        .analysis-box {
+            margin-top: 20px;
+            padding: 15px 20px;
+            background-color: #0f172a;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-blue);
+            display: none;
+        }
+
+        .analysis-box.show {
+            display: block;
+        }
+
+        .analysis-title {
+            color: var(--accent-blue);
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .analysis-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="brand">
+            <i class="fa-solid Mor fa-microchip"></i> FAP201 PORTAL
+        </div>
+        <ul class="chapter-list" id="chapterList">
+            </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h3 id="currentChapterTitle">Chương 1: Loading...</h3>
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('doc')"><i class="fa-solid fa-book-open"></i> Technical Read View</button>
+                <button class="tab-btn" onclick="switchTab('quiz')"><i class="fa-solid fa-gamepad"></i> Quiz App Mode</button>
+            </div>
+        </div>
+
+        <div class="display-panel">
+            <div id="docView" class="view-section active">
+                </div>
+
+            <div id="quizView" class="view-section">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // CENTRAL DATABASE (Chương 1 data is loaded. Chapters 2-11 placeholders can be updated easily later)
+        const centralData = {
+            1: {
+                title: "Chương 1: Meet the FPGA",
+                meta: "Kiến thức nền tảng và Đánh đổi hệ thống Phần cứng | Số câu hỏi Quizlet: 4 câu",
+                objectives: [
+                    "Thấu hiểu bản chất tái cấu hình phần cứng vật lý (Hardware Reprogrammability) của FPGA.",
+                    "Nắm chắc ma trận so sánh đánh đổi kinh tế và kỹ thuật giữa MCU, FPGA và ASIC.",
+                    "Phân loại thành thạo các mức độ trừu tượng (Levels of Abstraction) của ngôn ngữ mô tả phần cứng HDL."
+                ],
+                docHtml: `
+                    <div class="doc-section">
+                        <h3>1. Bản chất vật lý vi mạch (Physical Silicon Architecture)</h3>
+                        <p>Bản chất của một chip FPGA không hoạt động bằng cách nạp mã lệnh phần mềm vào bộ nhớ rồi ép một CPU lõi xử lý chạy tuần tự từng câu lệnh một giống như Vi điều khiển (<span class="highlight-term">Microcontroller - MCU</span>). Khi bạn lập trình FPGA, bạn đang <strong>tái cấu hình lại cấu trúc liên kết dây dẫn cứng trên tấm silicon</strong> (<span class="highlight-term">Configuring physical hardware connections</span>).</p>
+                        <p>Mọi thiết kế số phức tạp trên FPGA đều được xây dựng nên từ mạng lưới cấu trúc gồm hai phần tử sơ cấp đặt cạnh nhau trong các khối logic CLB:</p>
+                        <p>• <strong>Mạch tổ hợp (Combinational Logic):</strong> Do khối <strong>LUT (Look-Up Table - Bảng tra cứu)</strong> đảm nhiệm. Bản chất LUT là các ô nhớ SRAM nhỏ chứa bảng chân trị (Truth Table). Đầu vào đóng vai trò làm địa chỉ ô nhớ, đầu ra là dữ liệu đọc ra từ ô nhớ đó.</p>
+                        <p>• <strong>Mạch tuần tự (Sequential Logic):</strong> Do khối <strong>Flip-flop (D-FF)</strong> chịu trách nhiệm ghi nhớ dữ liệu 1-bit và đồng bộ hóa hoạt động dựa trên các sườn của xung nhịp hệ thống (<span class="highlight-term">System Clock Edge</span>).</p>
+                    </div>
+                    <div class="doc-section">
+                        <h3>2. Ma trận đối chiếu giải pháp phần cứng (System Engineering Matrix)</h3>
+                        <p>Để vượt qua các câu hỏi gài bẫy tình huống trong đề thi cuối kỳ (FE), kỹ sư cần phân biệt rõ ba loại cấu trúc IC:</p>
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th>ĐẶC TÍNH METRIC</th>
+                                    <th>MICROCONTROLLER (MCU)</th>
+                                    <th>FPGA</th>
+                                    <th>ASIC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>Core Engine</strong></td><td>CPU thực thi mã lệnh</td><td>Ma trận logic lập trình được</td><td>Mạch silicon chuyên dụng</td></tr>
+                                <tr><td><strong>Execution Mode</strong></td><td>Tuần tự (Sequential)</td><td>Song song tuyệt đối (Parallel)</td><td>Song song tuyệt đối (Parallel)</td></tr>
+                                <tr><td><strong>Hardware Mod</strong></td><td>Không thể (Fixed Hardware)</td><td>Linh hoạt (Reprogrammability)</td><td>Không thể (Fixed Silicon)</td></tr>
+                                <tr><td><strong>Per-unit Cost</strong></td><td>Thấp (Vài USD/chip)</td><td>Rất cao (High unit cost)</td><td>Siêu rẻ khi sản xuất lớn</td></tr>
+                                <tr><td><strong>Time-to-Market</strong></td><td>Ngắn (Sửa phần mềm)</td><td>Cực ngắn (Nạp lỗi chạy lại ngay)</td><td>Rất dài (Chờ đúc chip)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="doc-section">
+                        <h3>3. Ngôn ngữ mô tả phần cứng & RTL (HDL Abstraction)</h3>
+                        <p>Mã nguồn bạn viết bằng Verilog hoặc VHDL <strong>KHÔNG PHẢI LÀ PHẦN MỀM</strong>. Đó là văn bản mô tả mô hình cấu trúc phần cứng.</p>
+                        <p>• <strong>Verilog:</strong> Cú pháp dựa trên chuẩn ngôn ngữ <strong>C</strong>. Cho phép viết nhanh, thoáng, được dùng phổ biến trong công nghiệp thương mại đại chúng.</p>
+                        <p>• <strong>VHDL:</strong> Ngôn ngữ kiểm soát kiểu dữ liệu cực kỳ nghiêm ngặt (<span class="highlight-term">Strictly-typed language</span>). VHDL được sử dụng bắt buộc trong <strong>Ngành công nghiệp Quốc phòng Hoa Kỳ (US Defense Industry)</strong> nhờ độ tin cậy phần cứng tuyệt đối, tránh lỗi biên dịch ngầm.</p>
+                    </div>
+                `,
+                quiz: [
+                    {
+                        q: "When an engineer downloads a compiled design onto an FPGA device, what occurs at the physical silicon layer?",
+                        options: [
+                            "High-level code commands are stored in flash memory to be executed sequentially by an on-chip central processor.",
+                            "Physical switches and routing multiplexers are configured to build a dedicated digital circuit inside the fabric.",
+                            "The silicon wafer undergoes a destructive electrochemical altering process to fuse internal logic permanently.",
+                            "An internal compiler converts the commands into machine assembly code suitable for standard microcontrollers."
+                        ],
+                        correct: 1,
+                        analysis: "Bẫy đề thi FE hay lừa chọn ý A (cơ chế chạy của MCU). Đối với FPGA, khi nạp file bitstream, các công tắc linh kiện bán dẫn và khối ma trận định tuyến nối dây vật lý thực tế sẽ thay đổi liên kết để tự biến đổi thành một mạch điện cứng thực thụ chuyên xử lý tác vụ đó."
+                    },
+                    {
+                        q: "Which internal architectural primitives are uniquely mapped by synthesis tools to implement combinational logic and sequential logic respectively?",
+                        options: [
+                            "DSP Blocks for combinational processing; Block RAM (BRAM) for sequential state storage.",
+                            "Multiplexers (Mux) for combinational pathways; Tri-state buffers for sequential synchronization.",
+                            "Look-Up Tables (LUT) for combinational equations; Flip-flops for sequential state retention.",
+                            "Phase-Locked Loops (PLL) for combinational alignment; Input/Output Blocks (IOB) for data storage."
+                        ],
+                        correct: 2,
+                        analysis: "Đây là cặp đôi linh kiện xương sống của FPGA. Mạch tổ hợp (Combinational) bắt buộc phải map vào bộ nhớ tra cứu LUT, mạch tuần tự có trạng thái ghi nhớ (Sequential) bắt buộc phải map vào Flip-flop."
+                    },
+                    {
+                        q: "A hardware start-up company is planning to deploy a high-volume, extremely price-sensitive consumer electronic device. What economic risk do they encounter if they choose an FPGA over a dedicated ASIC?",
+                        options: [
+                            "Long hardware manufacturing waiting cycles at the silicon foundries before product deployment.",
+                            "Inability to perform over-the-air firmware updates and bug patches post-deployment.",
+                            "Significantly higher per-unit silicon procurement costs when scaled to millions of manufactured units.",
+                            "Total absence of parallel computing capabilities required to execute real-time image algorithms."
+                        ],
+                        correct: 2,
+                        analysis: "Từ khóa 'high-volume' (số lượng hàng triệu bản) và 'price-sensitive' (nhạy cảm về giá lẻ). Khi sản xuất cực kỳ lớn, chip ASIC đúc cố định cứng tại nhà máy tuy tốn tiền làm khuôn ban đầu nhưng giá trên từng con chip cực kỳ rẻ. Trong khi mua lẻ hàng triệu con chip FPGA sẽ đẩy chi phí linh kiện phần cứng (per-unit cost) lên cực kỳ cao, làm mất lợi thế cạnh tranh."
+                    },
+                    {
+                        q: "Why does the aerospace and military systems sector in the United States strictly mandate the utilization of VHDL over Verilog in critical airborne guidance computing projects?",
+                        options: [
+                            "Verilog lacks the technical ability to describe parallel computing structures and pipelined logic cells.",
+                            "VHDL syntax is derived directly from C, making it universally accessible to common computer software coders.",
+                            "VHDL enforces strict data-typing rules, preventing implicit gate optimizations and risky undeclared hardware bugs during compilation.",
+                            "Verilog designs consume double the physical silicon area compared to identical VHDL behavioral modules."
+                        ],
+                        correct: 2,
+                        analysis: "VHDL là ngôn ngữ định kiểu dữ liệu cực kỳ nghiêm ngặt (Strictly-typed). Nó bắt buộc kỹ sư phải khai báo rõ từng định dạng bit và kết nối dây tín hiệu một cách tường minh, ngăn chặn triệt để trình biên dịch tự động suy luận logic ngầm sinh lỗi phần cứng ngoài ý muốn."
+                    }
+                ]
+            },
+            // Placeholders for next chapters
+            2: { title: "Chương 2: Hardware and Tools", placeholder: true },
+            3: { title: "Chương 3: Boolean Algebra & LUT", placeholder: true },
+            4: { title: "Chương 4: Storing State with Flip-Flop", placeholder: true },
+            5: { title: "Chương 5: Testing Code with Simulation", placeholder: true },
+            6: { title: "Chương 6: Common FPGA Modules", placeholder: true },
+            7: { title: "Chương 7: Synthesis & Clock Domains", placeholder: true },
+            8: { title: "Chương 8: The State Machine (FSM)", placeholder: true },
+            9: { title: "Chương 9: Useful FPGA Primitives", placeholder: true },
+            10: { title: "Chương 10: Numbers and Math", placeholder: true },
+            11: { title: "Chương 11: IO and SerDes", placeholder: true }
+        };
+
+        let activeChapter = 1;
+
+        // Initialize App UI
+        function initApp() {
+            const listContainer = document.getElementById('chapterList');
+            listContainer.innerHTML = '';
+            
+            for(let i = 1; i <= 11; i++) {
+                const li = document.createElement('li');
+                li.className = `chapter-item ${i === activeChapter ? 'active' : ''}`;
+                li.innerHTML = `<i class="fa-solid fa-folder-open"></i> ${centralData[i].title}`;
+                li.onclick = () => loadChapter(i);
+                listContainer.appendChild(li);
+            }
+            loadChapter(activeChapter);
+        }
+
+        // Load Selected Chapter Content
+        function loadChapter(chNum) {
+            activeChapter = chNum;
+            
+            // Update Active Class in Sidebar
+            const items = document.querySelectorAll('.chapter-item');
+            items.forEach((item, idx) => {
+                if(idx + 1 === chNum) item.classList.add('active');
+                else item.classList.remove('active');
+            });
+
+            const data = centralData[chNum];
+            document.getElementById('currentChapterTitle').innerText = data.title;
+
+            if (data.placeholder) {
+                document.getElementById('docView').innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: var(--text-muted);">
+                        <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 20px; color: var(--accent-blue);"></i>
+                        <h3>Dữ liệu đang được biên dịch...</h3>
+                        <p style="margin-top: 10px;">Vui lòng thảo luận và chốt nội dung chương này với AI ở ô chat để nhận mã nạp dữ liệu vào đây.</p>
+                    </div>`;
+                document.getElementById('quizView').innerHTML = document.getElementById('docView').innerHTML;
+                return;
+            }
+
+            // Render Tab 1: Documentation View
+            let objectivesList = data.objectives.map(obj => `<li>${obj}</li>`).join('');
+            document.getElementById('docView').innerHTML = `
+                <h1 class="doc-title">${data.title}</h1>
+                <div class="doc-meta">${data.meta}</div>
+                <div class="objectives-box">
+                    <h4><i class="fa-solid fa-bullseye"></i> Mục tiêu trọng tâm (Learning Objectives)</h4>
+                    <ul>${objectivesList}</ul>
+                </div>
+                ${data.docHtml}
+            `;
+
+            // Render Tab 2: Quiz App View
+            let quizHtml = '';
+            data.quiz.forEach((quizItem, qIdx) => {
+                let optionsHtml = quizItem.options.map((opt, oIdx) => `
+                    <div class="option-item" onclick="checkAnswer(this, ${chNum}, ${qIdx}, ${oIdx})">
+                        <i class="fa-regular fa-circle"></i>
+                        <span>${opt}</span>
+                    </div>
+                `).join('');
+
+                quizHtml += `
+                    <div class="quiz-card" id="qCard_${qIdx}">
+                        <div class="quiz-question"><strong>Q${qIdx + 1}:</strong> ${quizItem.q}</div>
+                        <div class="options-container">${optionsHtml}</div>
+                        <div class="analysis-box" id="analysis_${qIdx}">
+                            <div class="analysis-title"><i class="fa-solid fa-circle-info"></i> PHÂN TÍCH CHUYÊN SÂU & BẪY FE:</div>
+                            <div class="analysis-text">${quizItem.analysis}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('quizView').innerHTML = quizHtml;
+            switchTab('doc'); // Reset standard view to doc tab
+        }
+
+        // Tab Switching Mechanism
+        function switchTab(tabName) {
+            const btns = document.querySelectorAll('.tab-btn');
+            if (tabName === 'doc') {
+                btns[0].classList.add('active');
+                btns[1].classList.remove('active');
+                document.getElementById('docView').classList.add('active');
+                document.getElementById('quizView').classList.remove('active');
+            } else {
+                btns[0].classList.remove('active');
+                btns[1].classList.add('active');
+                document.getElementById('docView').classList.remove('active');
+                document.getElementById('quizView').classList.add('active');
+            }
+        }
+
+        // Answer Checking Logic
+        function checkAnswer(selectedElement, chNum, qIdx, oIdx) {
+            const currentQuiz = centralData[chNum].quiz[qIdx];
+            const parentCard = document.getElementById(`qCard_${qIdx}`);
+            const allOptions = parentCard.querySelectorAll('.option-item');
+            
+            // Prevent multiple clicks
+            if(parentCard.classList.contains('answered')) return;
+            parentCard.classList.add('answered');
+
+            allOptions.forEach((option, idx) => {
+                if (idx === currentQuiz.correct) {
+                    option.classList.add('correct');
+                    option.querySelector('i').className = "fa-solid fa-circle-check";
+                }
+                if (idx === oIdx && oIdx !== currentQuiz.correct) {
+                    option.classList.add('incorrect');
+                    option.querySelector('i').className = "fa-solid fa-circle-xmark";
+                }
+            });
+
+            // Reveal professional analytical box
+            document.getElementById(`analysis_${qIdx}`).classList.add('show');
+        }
+
+        // Run application on bootstrap load
+        window.onload = initApp;
+    </script>
+</body>
+</html>
