@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IC2006-ALOHA | Advanced Learning Portal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <!-- Tích hợp công nghệ vẽ sơ đồ tư duy Mermaid.js giống Claude/Notion -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
         :root {
@@ -70,17 +69,20 @@
         .matrix-table th, .matrix-table td { border: 1px solid var(--panel-border); padding: 10px 14px; text-align: left; }
         .matrix-table th { background: rgba(31, 41, 55, 0.6); color: var(--accent-cyan); font-weight: 600; }
 
-        /* Enhanced Quiz UI Mode */
+        /* Bulletproof Quiz UI Mode */
         .quiz-card { background: var(--panel-dark); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; margin-bottom: 25px; }
         .quiz-tag { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; margin-bottom: 15px; display: inline-block; }
         .quiz-question { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin-bottom: 18px; }
 
         .options-grid { display: flex; flex-direction: column; gap: 10px; }
+        /* Đổi button thành div để tránh lỗi attribute disabled gây đơ giao diện ở một số trình duyệt */
         .option-btn { background: var(--bg-dark); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 8px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; text-align: left; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
-        .option-btn i { margin-top: 3px; }
-        .option-btn:hover:not(:disabled) { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.03); }
-        .option-btn.correct { border-color: var(--correct) !important; background: rgba(16, 185, 129, 0.1) !important; color: var(--correct) !important; font-weight: 600; }
-        .option-btn.incorrect { border-color: var(--incorrect) !important; background: rgba(239, 68, 68, 0.1) !important; color: var(--incorrect) !important; }
+        .option-btn i { margin-top: 3px; pointer-events: none; }
+        .option-btn span { pointer-events: none; }
+        .option-btn:hover:not(.locked) { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.03); }
+        .option-btn.locked { cursor: not-allowed; opacity: 0.8; }
+        .option-btn.correct { border-color: var(--correct) !important; background: rgba(16, 185, 129, 0.1) !important; color: var(--correct) !important; font-weight: 600; opacity: 1; }
+        .option-btn.incorrect { border-color: var(--incorrect) !important; background: rgba(239, 68, 68, 0.1) !important; color: var(--incorrect) !important; opacity: 1; }
 
         /* Dynamic Analysis Box */
         .analysis-box { margin-top: 20px; padding: 20px; background: #0b1120; border-radius: 8px; display: none; border-left: 4px solid var(--accent-purple); }
@@ -93,16 +95,14 @@
         .analysis-content p { font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 10px; }
         .trap-box { background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; margin-top: 10px; }
 
-        /* Glossary View */
+        /* Glossary & Mindmap */
         .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .glossary-card { background: var(--panel-dark); border: 1px solid var(--panel-border); border-radius: 8px; padding: 16px; }
         .glossary-term { font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem; margin-bottom: 6px; }
         .glossary-def { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
-
-        /* Mindmap View */
         .mermaid-container { background: #cbd5e1; border-radius: 8px; padding: 20px; overflow-x: auto; text-align: center; }
 
-        /* Floating AI Tutor Widget */
+        /* Floating UI */
         .floating-hub { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
         .hub-btn { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); border: none; color: white; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); transition: transform 0.2s; }
         .hub-btn:hover { transform: scale(1.08); }
@@ -118,11 +118,9 @@
             <div class="brand-logo"><i class="fa-solid fa-layer-group"></i> ALOHA-IC2006</div>
             <span class="brand-badge">HOME</span>
         </div>
-        
         <div class="chapter-item home-btn" onclick="goHome()">
             <i class="fa-solid fa-house"></i> DASHBOARD TỔNG
         </div>
-
         <div class="nav-section-label">Khóa Học: FAP201 - FPGA</div>
         <ul class="chapter-list" id="chapterList"></ul>
     </div>
@@ -145,7 +143,6 @@
 
         <!-- Dynamic Panels -->
         <div class="display-panel">
-            <!-- Home Dashboard View -->
             <div id="homeView" class="view-section">
                 <div class="academic-header" style="text-align: center; padding-top: 50px;">
                     <i class="fa-solid fa-graduation-cap" style="font-size: 4rem; color: var(--accent-purple); margin-bottom: 20px;"></i>
@@ -169,8 +166,12 @@
     </div>
 
     <script>
-        // Cấu hình thư viện vẽ sơ đồ tư duy (Mermaid.js)
-        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        // Bọc công tắc an toàn cho thư viện ngoài (Chống sập web nếu mạng lỗi)
+        try {
+            mermaid.initialize({ startOnLoad: false, theme: 'default' });
+        } catch(err) {
+            console.warn("Mermaid is not loaded yet.");
+        }
 
         // CƠ SỞ DỮ LIỆU KIẾN THỨC CỐT LÕI
         const centralData = {
@@ -210,7 +211,6 @@
                     { term: "Flip-Flop (D-FF)", def: "Phần tử lưu trữ 1-bit, làm nền tảng cho **mạch logic tuần tự**." },
                     { term: "Per-unit Cost", def: "Chi phí **sản xuất từng con chip đơn lẻ**. FPGA có per-unit cost rất cao so với ASIC." }
                 ],
-                // Thay thế HTML bằng định dạng code vẽ biểu đồ của Mermaid
                 mindmapCode: `
                     graph TD;
                         FPGA[FPGA Architecture] --> HW[Core Hardware Elements]
@@ -235,7 +235,7 @@
                         correct: 1,
                         explEn: "During programming, the bitstream configures internal physical routing switches and LUT SRAM cells to establish a dedicated hardware circuit directly on silicon.",
                         explVi: "Khi nạp bitstream, hệ thống FPGA tiến hành đóng/mở các <strong>công tắc chuyển mạch vật lý (physical switches)</strong> và định tuyến dây điện để tạo ra một <strong>mạch điện số chuyên dụng</strong>.",
-                        trapAnal: "Bẫy (Option 1 & 4): Mô tả cơ chế của Vi điều khiển (MCU) chạy lệnh bằng CPU. FPGA không chạy lệnh phần mềm mà nó cấu hình kết nối dây cứng."
+                        trapAnal: "Bẫy (Option 1 & 4): Mô tả cơ chế của Vi điều khiển (MCU) chạy lệnh bằng CPU. FPGA không chạy lệnh phần mềm mà cấu hình kết nối dây cứng."
                     },
                     {
                         q: "A hardware start-up company plans to deploy a high-volume, extremely price-sensitive consumer product. What economic risk do they encounter if they choose an FPGA over a dedicated ASIC?",
@@ -282,7 +282,6 @@
             activeChapter = chNum;
             document.getElementById('topBarNav').style.display = 'flex';
             
-            // Update Sidebar Highlights
             document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
             document.querySelectorAll('.chapter-list .chapter-item')[chNum-1].classList.add('active');
 
@@ -314,13 +313,13 @@
                 ${data.docHtml}
             `;
 
-            // 2. Render Quiz View (Enhanced)
+            // 2. Render Quiz View bằng kiến trúc Dataset (An toàn tuyệt đối)
             let quizHtml = '';
             data.quiz.forEach((q, qIdx) => {
                 let optsHtml = q.options.map((opt, oIdx) => `
-                    <button class="option-btn" id="btn_${qIdx}_${oIdx}" onclick="checkAnswer(${chNum}, ${qIdx}, ${oIdx})">
+                    <div class="option-btn" data-ch="${chNum}" data-q="${qIdx}" data-opt="${oIdx}">
                         <i class="fa-regular fa-circle"></i> <span>${opt}</span>
-                    </button>
+                    </div>
                 `).join('');
 
                 quizHtml += `
@@ -328,9 +327,7 @@
                         <span class="quiz-tag">QUESTION ${qIdx + 1}</span>
                         <div class="quiz-question">${q.q}</div>
                         <div class="options-grid">${optsHtml}</div>
-                        <div class="analysis-box" id="analysis_${qIdx}">
-                            <!-- Content injected via JS upon answer -->
-                        </div>
+                        <div class="analysis-box" id="analysis_${qIdx}"></div>
                     </div>
                 `;
             });
@@ -346,7 +343,7 @@
                 document.getElementById('glossaryView').innerHTML = glossHtml;
             }
 
-            // 4. Render Mindmap using Mermaid
+            // 4. Render Mindmap
             if(data.mindmapCode) {
                 document.getElementById('mindmapView').innerHTML = `
                     <div class="mermaid-container">
@@ -368,9 +365,9 @@
                     btns[idx].classList.add('active');
                     document.getElementById(`${v}View`).classList.add('active');
                     
-                    // Kích hoạt vẽ sơ đồ Mermaid khi chuyển sang tab Mindmap
                     if(tabName === 'mindmap') {
-                        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                        try { mermaid.init(undefined, document.querySelectorAll('.mermaid')); } 
+                        catch(err) { console.log('Mermaid init skipped.'); }
                     }
                 } else {
                     btns[idx].classList.remove('active');
@@ -379,8 +376,15 @@
             });
         }
 
-        // Logic xử lý đáp án tương tác sâu
-        function checkAnswer(chNum, qIdx, selectedIdx) {
+        // BỘ XỬ LÝ SỰ KIỆN GLOBAL (Tránh mọi lỗi click)
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.option-btn');
+            if (!btn) return;
+            
+            const chNum = parseInt(btn.getAttribute('data-ch'));
+            const qIdx = parseInt(btn.getAttribute('data-q'));
+            const selectedIdx = parseInt(btn.getAttribute('data-opt'));
+            
             const currentQuiz = centralData[chNum].quiz[qIdx];
             const parentCard = document.getElementById(`qCard_${qIdx}`);
             const analysisBox = document.getElementById(`analysis_${qIdx}`);
@@ -388,27 +392,24 @@
             if(parentCard.classList.contains('answered')) return;
             parentCard.classList.add('answered');
 
-            // Đổi màu các nút
             const allBtns = parentCard.querySelectorAll('.option-btn');
-            allBtns.forEach((btn, idx) => {
-                btn.disabled = true; // Khóa không cho bấm lại
+            allBtns.forEach((b, idx) => {
+                b.classList.add('locked');
                 if (idx === currentQuiz.correct) {
-                    btn.classList.add('correct');
-                    btn.querySelector('i').className = "fa-solid fa-circle-check";
+                    b.classList.add('correct');
+                    b.querySelector('i').className = "fa-solid fa-circle-check";
                 }
                 if (idx === selectedIdx && selectedIdx !== currentQuiz.correct) {
-                    btn.classList.add('incorrect');
-                    btn.querySelector('i').className = "fa-solid fa-circle-xmark";
+                    b.classList.add('incorrect');
+                    b.querySelector('i').className = "fa-solid fa-circle-xmark";
                 }
             });
 
-            // Sinh Banner trạng thái
             const isCorrect = selectedIdx === currentQuiz.correct;
             const statusHtml = isCorrect 
                 ? `<div class="status-banner win"><i class="fa-solid fa-check-double"></i> CHÍNH XÁC! (CORRECT)</div>`
                 : `<div class="status-banner lose"><i class="fa-solid fa-triangle-exclamation"></i> BẠN ĐÃ CHỌN SAI! (INCORRECT)</div>`;
 
-            // Sinh nội dung giải thích song ngữ
             analysisBox.innerHTML = `
                 ${statusHtml}
                 <div class="analysis-content">
@@ -425,7 +426,7 @@
                 </div>
             `;
             analysisBox.classList.add('show');
-        }
+        });
 
         window.onload = initApp;
     </script>
