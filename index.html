@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IC2006-ALOHA | Semiconductor & FPGA Learning Portal</title>
+    <title>IC2006-ALOHA | Advanced Learning Portal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <!-- Tích hợp công nghệ vẽ sơ đồ tư duy Mermaid.js giống Claude/Notion -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
         :root {
             --bg-dark: #090d16;
@@ -17,23 +19,25 @@
             --text-muted: #9ca3af;
             --correct: #10b981;
             --incorrect: #ef4444;
-            --warning: #f59e0b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
 
         /* Sidebar Styling */
         .sidebar { width: 320px; background-color: var(--panel-dark); border-right: 1px solid var(--panel-border); display: flex; flex-direction: column; z-index: 10; }
-        .brand { padding: 20px; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between; }
-        .brand-logo { font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; }
+        .brand { padding: 20px; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+        .brand:hover { background-color: rgba(255,255,255,0.02); }
+        .brand-logo { font-size: 1.1rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .brand-badge { background: rgba(139, 92, 246, 0.2); border: 1px solid var(--accent-purple); color: var(--accent-purple); font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 
         .nav-section-label { padding: 15px 20px 5px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
         .chapter-list { list-style: none; overflow-y: auto; flex: 1; padding: 0 10px; }
-        .chapter-item { padding: 10px 14px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; color: var(--text-muted); transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between; font-size: 0.88rem; }
+        .chapter-item { padding: 10px 14px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; color: var(--text-muted); transition: all 0.2s ease; display: flex; align-items: center; gap: 10px; font-size: 0.88rem; }
         .chapter-item:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--text-main); }
         .chapter-item.active { background: linear-gradient(90deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15)); border-left: 3px solid var(--accent-cyan); color: var(--accent-cyan); font-weight: 600; }
+        
+        .home-btn { background-color: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); margin: 10px; color: var(--accent-blue); justify-content: center; font-weight: bold; }
 
         /* Main Workspace */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
@@ -47,17 +51,17 @@
 
         .display-panel { flex: 1; overflow-y: auto; padding: 30px 40px; }
         .view-section { display: none; max-width: 960px; margin: 0 auto; }
-        .view-section.active { display: block; }
+        .view-section.active { display: block; animation: fadeIn 0.3s; }
 
         /* Technical Read View Styling */
-        .academic-header { margin-bottom: 25px; border-bottom: 1px solid var(--panel-border); pb: 15px; }
-        .academic-header h1 { font-size: 2.2rem; color: var(--text-main); font-weight: 800; margin-bottom: 8px; }
+        .academic-header { margin-bottom: 25px; border-bottom: 1px solid var(--panel-border); padding-bottom: 15px; }
+        .academic-header h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; }
         .callout-box { background: rgba(6, 182, 212, 0.05); border-left: 4px solid var(--accent-cyan); padding: 18px 20px; border-radius: 0 8px 8px 0; margin-bottom: 25px; }
-        .callout-box h4 { color: var(--accent-cyan); margin-bottom: 8px; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+        .callout-box h4 { color: var(--accent-cyan); margin-bottom: 8px; font-size: 0.95rem; }
         .callout-box ul { padding-left: 20px; font-size: 0.9rem; color: #d1d5db; line-height: 1.6; }
 
         .doc-section { margin-bottom: 30px; }
-        .doc-section h3 { font-size: 1.3rem; color: var(--text-main); margin-bottom: 12px; border-bottom: 1px solid var(--panel-border); padding-bottom: 6px; }
+        .doc-section h3 { font-size: 1.3rem; margin-bottom: 12px; border-bottom: 1px solid var(--panel-border); padding-bottom: 6px; }
         .doc-section p { font-size: 0.95rem; line-height: 1.7; color: #9ca3af; margin-bottom: 12px; }
         .term-tag { color: var(--accent-cyan); font-weight: 600; background: rgba(6, 182, 212, 0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(6, 182, 212, 0.2); }
 
@@ -66,60 +70,72 @@
         .matrix-table th, .matrix-table td { border: 1px solid var(--panel-border); padding: 10px 14px; text-align: left; }
         .matrix-table th { background: rgba(31, 41, 55, 0.6); color: var(--accent-cyan); font-weight: 600; }
 
-        /* Quiz UI Mode */
-        .quiz-card { background: var(--panel-dark); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; margin-bottom: 20px; position: relative; }
-        .quiz-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .quiz-tag { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
-        .quiz-question { font-size: 1.05rem; font-weight: 600; line-height: 1.5; color: var(--text-main); margin-bottom: 18px; }
+        /* Enhanced Quiz UI Mode */
+        .quiz-card { background: var(--panel-dark); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; margin-bottom: 25px; }
+        .quiz-tag { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; margin-bottom: 15px; display: inline-block; }
+        .quiz-question { font-size: 1.05rem; font-weight: 600; line-height: 1.5; margin-bottom: 18px; }
 
         .options-grid { display: flex; flex-direction: column; gap: 10px; }
-        .option-btn { background: var(--bg-dark); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 8px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; text-align: left; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
-        .option-btn:hover { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.03); }
-        .option-btn.correct { border-color: var(--correct) !important; background: rgba(16, 185, 129, 0.12) !important; color: var(--correct) !important; font-weight: 600; }
-        .option-btn.incorrect { border-color: var(--incorrect) !important; background: rgba(239, 68, 68, 0.12) !important; color: var(--incorrect) !important; }
+        .option-btn { background: var(--bg-dark); border: 1px solid var(--panel-border); padding: 14px 18px; border-radius: 8px; cursor: pointer; color: #d1d5db; font-size: 0.9rem; text-align: left; transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px; }
+        .option-btn i { margin-top: 3px; }
+        .option-btn:hover:not(:disabled) { border-color: var(--accent-cyan); background: rgba(6, 182, 212, 0.03); }
+        .option-btn.correct { border-color: var(--correct) !important; background: rgba(16, 185, 129, 0.1) !important; color: var(--correct) !important; font-weight: 600; }
+        .option-btn.incorrect { border-color: var(--incorrect) !important; background: rgba(239, 68, 68, 0.1) !important; color: var(--incorrect) !important; }
 
-        .bilingual-analysis { margin-top: 18px; padding: 16px; background: #0b1120; border-radius: 8px; border-left: 4px solid var(--accent-purple); display: none; }
-        .bilingual-analysis.show { display: block; animation: fadeIn 0.3s ease-in; }
-        .analysis-head { font-weight: 700; font-size: 0.85rem; color: var(--accent-purple); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; }
-        .analysis-body { font-size: 0.88rem; line-height: 1.6; color: #d1d5db; }
-        .analysis-body strong { color: var(--accent-cyan); }
+        /* Dynamic Analysis Box */
+        .analysis-box { margin-top: 20px; padding: 20px; background: #0b1120; border-radius: 8px; display: none; border-left: 4px solid var(--accent-purple); }
+        .analysis-box.show { display: block; animation: fadeIn 0.4s; }
+        .status-banner { font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .status-banner.win { color: var(--correct); }
+        .status-banner.lose { color: var(--incorrect); }
+        
+        .analysis-content h5 { color: var(--accent-cyan); margin: 15px 0 5px 0; font-size: 0.9rem; text-transform: uppercase; }
+        .analysis-content p { font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 10px; }
+        .trap-box { background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; margin-top: 10px; }
 
         /* Glossary View */
-        .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
+        .glossary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
         .glossary-card { background: var(--panel-dark); border: 1px solid var(--panel-border); border-radius: 8px; padding: 16px; }
         .glossary-term { font-weight: 700; color: var(--accent-cyan); font-size: 0.95rem; margin-bottom: 6px; }
         .glossary-def { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
 
-        /* AI Tutor & Upload Floating Hub */
+        /* Mindmap View */
+        .mermaid-container { background: #cbd5e1; border-radius: 8px; padding: 20px; overflow-x: auto; text-align: center; }
+
+        /* Floating AI Tutor Widget */
         .floating-hub { position: fixed; bottom: 20px; right: 20px; display: flex; gap: 10px; z-index: 100; }
-        .hub-btn { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); border: none; color: white; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); transition: transform 0.2s; display: flex; align-items: center; justify-content: center; }
+        .hub-btn { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); border: none; color: white; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); transition: transform 0.2s; }
         .hub-btn:hover { transform: scale(1.08); }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <!-- Sidebar Left Navigation -->
     <div class="sidebar">
-        <div class="brand">
-            <div class="brand-logo"><i class="fa-solid fa-microchip"></i> IC2006-ALOHA</div>
-            <span class="brand-badge">PRO v2.0</span>
+        <div class="brand" onclick="goHome()">
+            <div class="brand-logo"><i class="fa-solid fa-layer-group"></i> ALOHA-IC2006</div>
+            <span class="brand-badge">HOME</span>
         </div>
         
-        <div class="nav-section-label">Danh Mục Bài Học (Modules)</div>
+        <div class="chapter-item home-btn" onclick="goHome()">
+            <i class="fa-solid fa-house"></i> DASHBOARD TỔNG
+        </div>
+
+        <div class="nav-section-label">Khóa Học: FAP201 - FPGA</div>
         <ul class="chapter-list" id="chapterList"></ul>
     </div>
 
     <!-- Main Workspace Right -->
     <div class="main-content">
         <!-- Top Bar -->
-        <div class="top-bar">
+        <div class="top-bar" id="topBarNav">
             <div class="top-title">
                 <h2 id="currentChapterTitle">Chương 1: Meet the FPGA</h2>
                 <p id="currentChapterMeta">FAP201 - Semiconductor Design & Verification</p>
             </div>
-            <div class="tab-nav">
+            <div class="tab-nav" id="moduleTabs">
                 <button class="tab-btn active" onclick="switchTab('doc')"><i class="fa-solid fa-book-open"></i> Technical View</button>
                 <button class="tab-btn" onclick="switchTab('quiz')"><i class="fa-solid fa-vial"></i> Quiz App Mode</button>
                 <button class="tab-btn" onclick="switchTab('glossary')"><i class="fa-solid fa-language"></i> Thuật Ngữ</button>
@@ -129,6 +145,16 @@
 
         <!-- Dynamic Panels -->
         <div class="display-panel">
+            <!-- Home Dashboard View -->
+            <div id="homeView" class="view-section">
+                <div class="academic-header" style="text-align: center; padding-top: 50px;">
+                    <i class="fa-solid fa-graduation-cap" style="font-size: 4rem; color: var(--accent-purple); margin-bottom: 20px;"></i>
+                    <h1 style="font-size: 2.5rem;">ALOHA-IC2006 WORKSPACE</h1>
+                    <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Nền tảng học thuật cá nhân hóa. Chọn khóa học FAP201 ở menu bên trái để tiếp tục ôn tập cấu trúc vi mạch bán dẫn.</p>
+                </div>
+            </div>
+
+            <!-- Module Views -->
             <div id="docView" class="view-section active"></div>
             <div id="quizView" class="view-section"></div>
             <div id="glossaryView" class="view-section"></div>
@@ -138,12 +164,15 @@
 
     <!-- Floating AI Tutor & Document Uploader Widget -->
     <div class="floating-hub">
-        <button class="hub-btn" title="Upload Tài Liệu Mới (PDF/Docs)" onclick="alert('Tính năng Uploading tài liệu đang kết nối Server!')"><i class="fa-solid fa-file-arrow-up"></i></button>
-        <button class="hub-btn" title="Hỏi Đáp AI Tutor ALOHA" onclick="alert('Trợ lý AI ALOHA-IC2006 sẵn sàng hỗ trợ giải đáp 24/7!')"><i class="fa-solid fa-robot"></i></button>
+        <button class="hub-btn" title="Upload Tài Liệu Mới (PDF/Docs)"><i class="fa-solid fa-file-arrow-up"></i></button>
+        <button class="hub-btn" title="Hỏi Đáp AI Tutor ALOHA"><i class="fa-solid fa-robot"></i></button>
     </div>
 
     <script>
-        // CENTRAL DATABASE SYSTEM (IC2006-ALOHA)
+        // Cấu hình thư viện vẽ sơ đồ tư duy (Mermaid.js)
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+        // CƠ SỞ DỮ LIỆU KIẾN THỨC CỐT LÕI
         const centralData = {
             1: {
                 title: "Chương 1: Meet the FPGA",
@@ -157,24 +186,18 @@
                     <div class="doc-section">
                         <h3>1. Bản chất vật lý vi mạch (Physical Silicon Architecture)</h3>
                         <p>FPGA không hoạt động theo cơ chế chạy phần mềm tuần tự trên CPU như Vi điều khiển (<span class="term-tag">Microcontroller - MCU</span>). Khi nạp file cấu hình bitstream, hệ thống đang <strong>tái cấu hình kết nối dây dẫn vật lý trực tiếp trên tấm silicon</strong> (<span class="term-tag">Configuring physical hardware connections</span>).</p>
-                        <p>Cấu trúc mạch số trên FPGA được tổng hợp từ hai phần tử sơ cấp trong các khối CLB:</p>
-                        <p>• <strong>Mạch tổ hợp (Combinational Logic):</strong> Do khối <strong>LUT (Look-Up Table)</strong> đảm nhiệm. LUT chứa bảng chân trị (Truth Table) dưới dạng các ô nhớ SRAM, với đầu vào là địa chỉ ô nhớ.</p>
-                        <p>• <strong>Mạch tuần tự (Sequential Logic):</strong> Do khối <strong>Flip-flop (D-FF)</strong> đảm nhiệm, chịu trách nhiệm lưu trữ trạng thái 1-bit và đồng bộ hóa dữ liệu theo sườn xung nhịp (<span class="term-tag">System Clock Edge</span>).</p>
+                        <p>Cấu trúc mạch số trên FPGA được tổng hợp từ hai phần tử sơ cấp:</p>
+                        <p>• <strong>Mạch tổ hợp (Combinational Logic):</strong> Do khối <strong>LUT (Look-Up Table)</strong> đảm nhiệm. LUT chứa bảng chân trị (Truth Table) dưới dạng các ô nhớ SRAM.</p>
+                        <p>• <strong>Mạch tuần tự (Sequential Logic):</strong> Do khối <strong>Flip-flop (D-FF)</strong> đảm nhiệm, lưu trữ trạng thái 1-bit và đồng bộ theo sườn xung nhịp.</p>
                     </div>
                     <div class="doc-section">
                         <h3>2. Ma trận đối chiếu giải pháp vi mạch (Hardware Decision Matrix)</h3>
                         <table class="matrix-table">
                             <thead>
-                                <tr>
-                                    <th>TIÊU CHÍ (METRIC)</th>
-                                    <th>MICROCONTROLLER (MCU)</th>
-                                    <th>FPGA</th>
-                                    <th>ASIC</th>
-                                </tr>
+                                <tr><th>TIÊU CHÍ (METRIC)</th><th>MICROCONTROLLER (MCU)</th><th>FPGA</th><th>ASIC</th></tr>
                             </thead>
                             <tbody>
                                 <tr><td><strong>Execution Mode</strong></td><td>Tuần tự (Sequential)</td><td>Song song (Parallel)</td><td>Song song (Parallel)</td></tr>
-                                <tr><td><strong>Hardware Mod</strong></td><td>Fixed Hardware (Cố định)</td><td>Reprogrammable (Linh hoạt)</td><td>Fixed Silicon (Cố định cứng)</td></tr>
                                 <tr><td><strong>Per-unit Cost</strong></td><td>Thấp (Vài USD)</td><td><strong>Rất cao (High Unit Cost)</strong></td><td>Siêu rẻ khi sản xuất lớn</td></tr>
                                 <tr><td><strong>Time-to-Market</strong></td><td>Ngắn (Sửa phần mềm)</td><td><strong>Cực ngắn (Nạp lỗi chạy lại)</strong></td><td>Rất dài (Chờ đúc chip)</td></tr>
                             </tbody>
@@ -182,190 +205,161 @@
                     </div>
                 `,
                 glossary: [
-                    { term: "FPGA (Field-Programmable Gate Array)", def: "Vi mạch tích hợp kỹ thuật số có khả năng **tái cấu hình phần cứng vật lý** sau khi xuất xưởng." },
-                    { term: "LUT (Look-Up Table)", def: "Khối bộ nhớ SRAM nhỏ đóng vai trò chứa **bảng chân trị** để hiện thực hóa **mạch logic tổ hợp**." },
-                    { term: "Flip-Flop (D-FF)", def: "Phần tử lưu trữ 1-bit dữ liệu, làm nền tảng cho **mạch logic tuần tự** và **thanh ghi (Register)**." },
-                    { term: "Per-unit Cost", def: "Chi phí linh kiện trên **từng đơn vị con chip đơn lẻ**. FPGA có per-unit cost rất cao so với ASIC." },
-                    { term: "NRE Cost (Non-Recurring Engineering)", def: "Chi phí **nghiên cứu & đúc khuôn ban đầu**. ASIC có chi phí NRE cực kỳ đắt đỏ." }
+                    { term: "FPGA", def: "Vi mạch kỹ thuật số có khả năng **tái cấu hình phần cứng vật lý** sau khi xuất xưởng." },
+                    { term: "LUT (Look-Up Table)", def: "Khối bộ nhớ SRAM nhỏ đóng vai trò chứa **bảng chân trị** để tạo ra **mạch logic tổ hợp**." },
+                    { term: "Flip-Flop (D-FF)", def: "Phần tử lưu trữ 1-bit, làm nền tảng cho **mạch logic tuần tự**." },
+                    { term: "Per-unit Cost", def: "Chi phí **sản xuất từng con chip đơn lẻ**. FPGA có per-unit cost rất cao so với ASIC." }
                 ],
-                mindmapHtml: `
-                    <div style="background: var(--panel-dark); padding: 20px; border-radius: 8px; border: 1px solid var(--panel-border); font-family: monospace; line-height: 1.8; color: var(--accent-cyan);">
-                        FPGA CORE ARCHITECTURE<br>
-                        ├── 1. HARDWARE ELEMENTS<br>
-                        │   ├── LUT (Look-Up Table) ──> Combinational Logic (Logic tổ hợp)<br>
-                        │   └── Flip-Flop (D-FF)     ──> Sequential Logic (Logic tuần tự)<br>
-                        ├── 2. SYSTEM TRADE-OFFS<br>
-                        │   ├── vs MCU  ──> FPGA xử lý SONG SONG (Parallel Execution)<br>
-                        │   └── vs ASIC ──> FPGA tối ưu Time-to-Market nhưng High Per-unit Cost<br>
-                        └── 3. LANGUAGES<br>
-                            ├── Verilog ──> Cú pháp giống C, phổ biến thương mại<br>
-                            └── VHDL    ──> Strictly-typed, dùng trong Mỹ Defense Industry
-                    </div>
+                // Thay thế HTML bằng định dạng code vẽ biểu đồ của Mermaid
+                mindmapCode: `
+                    graph TD;
+                        FPGA[FPGA Architecture] --> HW[Core Hardware Elements]
+                        HW --> LUT[LUT: Combinational Logic]
+                        HW --> FF[Flip-Flop: Sequential Logic]
+                        FPGA --> TO[System Trade-offs]
+                        TO --> MCU[vs MCU: Parallel Execution]
+                        TO --> ASIC[vs ASIC: Fast Time-to-Market, High Cost]
+                        FPGA --> HDL[Hardware Description Languages]
+                        HDL --> VER[Verilog: C-like Syntax]
+                        HDL --> VHD[VHDL: Strictly-typed, US Defense]
                 `,
                 quiz: [
                     {
                         q: "When an engineer downloads a compiled design onto an FPGA device, what occurs at the physical silicon layer?",
                         options: [
-                            "A. High-level code commands are stored in flash memory to be executed sequentially by an on-chip CPU.",
-                            "B. Physical switches and routing multiplexers are configured to build a dedicated digital circuit inside the fabric.",
-                            "C. The silicon wafer undergoes a destructive electrochemical altering process to fuse logic permanently.",
-                            "D. An internal compiler converts commands into assembly code for standard microcontrollers."
+                            "High-level code commands are stored in flash memory to be executed sequentially by an on-chip CPU.",
+                            "Physical switches and routing multiplexers are configured to build a dedicated digital circuit inside the fabric.",
+                            "The silicon wafer undergoes a destructive electrochemical altering process to fuse logic permanently.",
+                            "An internal compiler converts commands into assembly code for standard microcontrollers."
                         ],
                         correct: 1,
-                        analysisEn: "<strong>Correct Answer: B.</strong> During programming, the bitstream configures internal physical routing switches and LUT SRAM cells to establish a dedicated hardware circuit directly on silicon.",
-                        analysisVi: "<strong>Phân tích bẫy FE:</strong> Bẫy A tả cơ chế của Vi điều khiển (MCU). Đối với FPGA, nạp bitstream là **cấu hình lại các công tắc chuyển mạch vật lý (physical switches)** và đường dây nối để chip biến thành một **mạch điện số chuyên dụng** thực thụ."
-                    },
-                    {
-                        q: "Which internal architectural primitives are uniquely mapped by synthesis tools to implement combinational logic and sequential logic respectively?",
-                        options: [
-                            "A. DSP Blocks for combinational processing; Block RAM for sequential state storage.",
-                            "B. Multiplexers for combinational pathways; Tri-state buffers for sequential synchronization.",
-                            "C. Look-Up Tables (LUT) for combinational equations; Flip-flops for sequential state retention.",
-                            "D. Phase-Locked Loops (PLL) for combinational alignment; Input/Output Blocks for data storage."
-                        ],
-                        correct: 2,
-                        analysisEn: "<strong>Correct Answer: C.</strong> Look-Up Tables (LUTs) synthesize truth tables for combinational logic, while Flip-flops store state bits for sequential logic.",
-                        analysisVi: "<strong>Bản chất phần cứng:</strong> Mạch tổ hợp (không bộ nhớ) bắt buộc map vào **LUT**, mạch tuần tự (có ghi nhớ trạng thái) bắt buộc map vào **Flip-flop**."
+                        explEn: "During programming, the bitstream configures internal physical routing switches and LUT SRAM cells to establish a dedicated hardware circuit directly on silicon.",
+                        explVi: "Khi nạp bitstream, hệ thống FPGA tiến hành đóng/mở các <strong>công tắc chuyển mạch vật lý (physical switches)</strong> và định tuyến dây điện để tạo ra một <strong>mạch điện số chuyên dụng</strong>.",
+                        trapAnal: "Bẫy (Option 1 & 4): Mô tả cơ chế của Vi điều khiển (MCU) chạy lệnh bằng CPU. FPGA không chạy lệnh phần mềm mà nó cấu hình kết nối dây cứng."
                     },
                     {
                         q: "A hardware start-up company plans to deploy a high-volume, extremely price-sensitive consumer product. What economic risk do they encounter if they choose an FPGA over a dedicated ASIC?",
                         options: [
-                            "A. Long hardware manufacturing waiting cycles at the silicon foundries.",
-                            "B. Inability to perform over-the-air firmware updates and bug patches.",
-                            "C. Significantly higher per-unit silicon procurement costs when scaled to millions of manufactured units.",
-                            "D. Total absence of parallel computing capabilities required to execute image algorithms."
+                            "Long hardware manufacturing waiting cycles at the silicon foundries.",
+                            "Inability to perform over-the-air firmware updates and bug patches.",
+                            "Significantly higher per-unit silicon procurement costs when scaled to millions of manufactured units.",
+                            "Total absence of parallel computing capabilities required to execute image algorithms."
                         ],
                         correct: 2,
-                        analysisEn: "<strong>Correct Answer: C.</strong> While FPGAs avoid massive NRE costs, their per-unit cost remains significantly higher than ASICs when mass-produced in high volumes.",
-                        analysisVi: "<strong>Kinh tế vi mạch:</strong> Từ khóa **high-volume** (sản xuất hàng loạt) và **price-sensitive** (nhạy cảm về giá). Mua lẻ hàng triệu con chip FPGA có **chi phí trên từng linh kiện (per-unit cost)** cực kỳ đắt so với đúc ASIC cố định."
-                    },
-                    {
-                        q: "Why does the aerospace and military systems sector in the United States strictly mandate the utilization of VHDL over Verilog in critical projects?",
-                        options: [
-                            "A. Verilog lacks the technical ability to describe parallel computing structures.",
-                            "B. VHDL syntax is derived directly from C, making it accessible to software coders.",
-                            "C. VHDL enforces strict data-typing rules, preventing implicit gate optimizations and undeclared hardware bugs.",
-                            "D. Verilog designs consume double the physical silicon area compared to VHDL."
-                        ],
-                        correct: 2,
-                        analysisEn: "<strong>Correct Answer: C.</strong> VHDL's strongly-typed syntax forces explicit type declarations, eliminating compiler-introduced logic assumptions and hidden hardware bugs.",
-                        analysisVi: "<strong>Lý do quân đội Mỹ chọn VHDL:</strong> VHDL có quy tắc **định kiểu dữ liệu cực kỳ nghiêm ngặt (Strictly-typed)**. Trình biên dịch ép kỹ sư khai báo tường minh 100%, loại bỏ hoàn toàn các **lỗi logic ẩn (undeclared hardware bugs)**."
+                        explEn: "While FPGAs avoid massive NRE (initial) costs, their per-unit cost remains significantly higher than ASICs when mass-produced in high volumes.",
+                        explVi: "Khi sản xuất hàng loạt (high-volume) cho thị trường nhạy cảm về giá (price-sensitive), rủi ro lớn nhất là <strong>chi phí linh kiện đơn lẻ (per-unit cost)</strong> của FPGA quá đắt đỏ so với chip ASIC.",
+                        trapAnal: "Bẫy (Option 1): Đây chính là nhược điểm của ASIC (đợi đúc chip lâu), không phải của FPGA."
                     }
                 ]
             },
             2: { title: "Chương 2: Hardware and Tools", placeholder: true },
-            3: { title: "Chương 3: Boolean Algebra & LUT", placeholder: true },
-            4: { title: "Chương 4: Storing State with Flip-Flop", placeholder: true },
-            5: { title: "Chương 5: Testing Code with Simulation", placeholder: true },
-            6: { title: "Chương 6: Common FPGA Modules", placeholder: true },
-            7: { title: "Chương 7: Synthesis & Clock Domains", placeholder: true },
-            8: { title: "Chương 8: The State Machine (FSM)", placeholder: true },
-            9: { title: "Chương 9: Useful FPGA Primitives", placeholder: true },
-            10: { title: "Chương 10: Numbers and Math", placeholder: true },
-            11: { title: "Chương 11: IO and SerDes", placeholder: true }
+            3: { title: "Chương 3: Boolean Algebra & LUT", placeholder: true }
         };
 
         let activeChapter = 1;
 
         function initApp() {
             const listContainer = document.getElementById('chapterList');
-            listContainer.innerHTML = '';
-            for(let i = 1; i <= 11; i++) {
+            for(let i = 1; i <= 3; i++) {
                 const li = document.createElement('li');
                 li.className = `chapter-item ${i === activeChapter ? 'active' : ''}`;
-                li.innerHTML = `<span><i class="fa-solid fa-cube"></i> Chap ${i}: ${centralData[i].title.split(':')[1] || centralData[i].title}</span>`;
+                li.innerHTML = `<span><i class="fa-solid fa-cube"></i> Chap ${i}: ${centralData[i].title.split(':')[1]}</span>`;
                 li.onclick = () => loadChapter(i);
                 listContainer.appendChild(li);
             }
             loadChapter(activeChapter);
         }
 
+        // Home Dashboard Navigation
+        function goHome() {
+            document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
+            document.getElementById('topBarNav').style.display = 'none';
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('homeView').classList.add('active');
+        }
+
         function loadChapter(chNum) {
             activeChapter = chNum;
-            document.querySelectorAll('.chapter-item').forEach((item, idx) => {
-                if(idx + 1 === chNum) item.classList.add('active');
-                else item.classList.remove('active');
-            });
+            document.getElementById('topBarNav').style.display = 'flex';
+            
+            // Update Sidebar Highlights
+            document.querySelectorAll('.chapter-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.chapter-list .chapter-item')[chNum-1].classList.add('active');
 
             const data = centralData[chNum];
             document.getElementById('currentChapterTitle').innerText = data.title;
-            document.getElementById('currentChapterMeta').innerText = data.meta || "ALOHA-IC2006 Module Courseware";
+            document.getElementById('currentChapterMeta').innerText = data.meta || "Module Workspace";
 
             if (data.placeholder) {
-                const emptyHtml = `<div style="text-align:center; padding:60px; color:var(--text-muted);"><i class="fa-solid fa-code-merge" style="font-size:3rem; color:var(--accent-cyan); margin-bottom:15px;"></i><h3>Nội dung đang thống nhất ở ô chat...</h3><p style="margin-top:8px;">Hãy thảo luận với AI để nạp dữ liệu chương này vào hệ thống!</p></div>`;
+                const emptyHtml = `<div style="text-align:center; padding:60px; color:var(--text-muted);"><i class="fa-solid fa-code-merge" style="font-size:3rem; color:var(--accent-cyan); margin-bottom:15px;"></i><h3>Nội dung đang được phân tích...</h3><p>Đang chờ chốt thống nhất dữ liệu từ AI Assistant.</p></div>`;
                 document.getElementById('docView').innerHTML = emptyHtml;
                 document.getElementById('quizView').innerHTML = emptyHtml;
                 document.getElementById('glossaryView').innerHTML = emptyHtml;
                 document.getElementById('mindmapView').innerHTML = emptyHtml;
+                switchTab('doc');
                 return;
             }
 
-            // Render Doc View
+            // 1. Render Technical View
             let objList = data.objectives.map(o => `<li>${o}</li>`).join('');
             document.getElementById('docView').innerHTML = `
                 <div class="academic-header">
                     <h1>${data.title}</h1>
-                    <p style="color:var(--text-muted); font-size:0.9rem;">${data.meta}</p>
+                    <p style="color:var(--text-muted); font-size:0.95rem;">${data.meta}</p>
                 </div>
                 <div class="callout-box">
-                    <h4><i class="fa-solid fa-bullseye"></i> MỤC TIÊU HỌC HIỂU ĐẠT ĐIỂM TUYỆT ĐỐI:</h4>
+                    <h4><i class="fa-solid fa-bullseye"></i> MỤC TIÊU CỐT LÕI (LEARNING OBJECTIVES):</h4>
                     <ul>${objList}</ul>
                 </div>
                 ${data.docHtml}
             `;
 
-            // Render Quiz View
+            // 2. Render Quiz View (Enhanced)
             let quizHtml = '';
             data.quiz.forEach((q, qIdx) => {
                 let optsHtml = q.options.map((opt, oIdx) => `
-                    <button class="option-btn" onclick="checkAnswer(this, ${chNum}, ${qIdx}, ${oIdx})">
-                        <i class="fa-regular fa-circle"></i> ${opt}
+                    <button class="option-btn" id="btn_${qIdx}_${oIdx}" onclick="checkAnswer(${chNum}, ${qIdx}, ${oIdx})">
+                        <i class="fa-regular fa-circle"></i> <span>${opt}</span>
                     </button>
                 `).join('');
 
                 quizHtml += `
                     <div class="quiz-card" id="qCard_${qIdx}">
-                        <div class="quiz-header">
-                            <span class="quiz-tag">QUESTION ${qIdx + 1}</span>
-                        </div>
+                        <span class="quiz-tag">QUESTION ${qIdx + 1}</span>
                         <div class="quiz-question">${q.q}</div>
                         <div class="options-grid">${optsHtml}</div>
-                        <div class="bilingual-analysis" id="analysis_${qIdx}">
-                            <div class="analysis-head"><i class="fa-solid fa-graduation-cap"></i> Giải Thích Song Ngữ & Bẫy Đề Thi:</div>
-                            <div class="analysis-body">
-                                <p style="margin-bottom:6px; color:#93c5fd;">${q.analysisEn}</p>
-                                <p>${q.analysisVi}</p>
-                            </div>
+                        <div class="analysis-box" id="analysis_${qIdx}">
+                            <!-- Content injected via JS upon answer -->
                         </div>
                     </div>
                 `;
             });
             document.getElementById('quizView').innerHTML = quizHtml;
 
-            // Render Glossary View
+            // 3. Render Glossary
             if(data.glossary) {
                 let glossHtml = '<div class="glossary-grid">';
                 data.glossary.forEach(g => {
-                    glossHtml += `
-                        <div class="glossary-card">
-                            <div class="glossary-term">${g.term}</div>
-                            <div class="glossary-def">${g.def.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>
-                        </div>
-                    `;
+                    glossHtml += `<div class="glossary-card"><div class="glossary-term">${g.term}</div><div class="glossary-def">${g.def.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div></div>`;
                 });
                 glossHtml += '</div>';
                 document.getElementById('glossaryView').innerHTML = glossHtml;
             }
 
-            // Render Mindmap View
-            if(data.mindmapHtml) {
-                document.getElementById('mindmapView').innerHTML = data.mindmapHtml;
+            // 4. Render Mindmap using Mermaid
+            if(data.mindmapCode) {
+                document.getElementById('mindmapView').innerHTML = `
+                    <div class="mermaid-container">
+                        <div class="mermaid">${data.mindmapCode}</div>
+                    </div>
+                `;
             }
 
             switchTab('doc');
         }
 
         function switchTab(tabName) {
+            document.getElementById('homeView').classList.remove('active');
             const btns = document.querySelectorAll('.tab-btn');
             const views = ['doc', 'quiz', 'glossary', 'mindmap'];
             
@@ -373,6 +367,11 @@
                 if(v === tabName) {
                     btns[idx].classList.add('active');
                     document.getElementById(`${v}View`).classList.add('active');
+                    
+                    // Kích hoạt vẽ sơ đồ Mermaid khi chuyển sang tab Mindmap
+                    if(tabName === 'mindmap') {
+                        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
+                    }
                 } else {
                     btns[idx].classList.remove('active');
                     document.getElementById(`${v}View`).classList.remove('active');
@@ -380,26 +379,52 @@
             });
         }
 
-        function checkAnswer(btnElement, chNum, qIdx, oIdx) {
+        // Logic xử lý đáp án tương tác sâu
+        function checkAnswer(chNum, qIdx, selectedIdx) {
             const currentQuiz = centralData[chNum].quiz[qIdx];
             const parentCard = document.getElementById(`qCard_${qIdx}`);
-            const allBtns = parentCard.querySelectorAll('.option-btn');
+            const analysisBox = document.getElementById(`analysis_${qIdx}`);
             
             if(parentCard.classList.contains('answered')) return;
             parentCard.classList.add('answered');
 
+            // Đổi màu các nút
+            const allBtns = parentCard.querySelectorAll('.option-btn');
             allBtns.forEach((btn, idx) => {
+                btn.disabled = true; // Khóa không cho bấm lại
                 if (idx === currentQuiz.correct) {
                     btn.classList.add('correct');
                     btn.querySelector('i').className = "fa-solid fa-circle-check";
                 }
-                if (idx === oIdx && oIdx !== currentQuiz.correct) {
+                if (idx === selectedIdx && selectedIdx !== currentQuiz.correct) {
                     btn.classList.add('incorrect');
                     btn.querySelector('i').className = "fa-solid fa-circle-xmark";
                 }
             });
 
-            document.getElementById(`analysis_${qIdx}`).classList.add('show');
+            // Sinh Banner trạng thái
+            const isCorrect = selectedIdx === currentQuiz.correct;
+            const statusHtml = isCorrect 
+                ? `<div class="status-banner win"><i class="fa-solid fa-check-double"></i> CHÍNH XÁC! (CORRECT)</div>`
+                : `<div class="status-banner lose"><i class="fa-solid fa-triangle-exclamation"></i> BẠN ĐÃ CHỌN SAI! (INCORRECT)</div>`;
+
+            // Sinh nội dung giải thích song ngữ
+            analysisBox.innerHTML = `
+                ${statusHtml}
+                <div class="analysis-content">
+                    <h5><i class="fa-solid fa-earth-americas"></i> English Explanation</h5>
+                    <p>${currentQuiz.explEn}</p>
+                    
+                    <h5><i class="fa-solid fa-language"></i> Bản chất Tiếng Việt</h5>
+                    <p>${currentQuiz.explVi}</p>
+                    
+                    <div class="trap-box">
+                        <strong style="color: #ef4444;"><i class="fa-solid fa-skull-crossbones"></i> Phân tích Bẫy (Trap Analysis):</strong><br>
+                        <span style="font-size: 0.88rem; color: #fca5a5;">${currentQuiz.trapAnal}</span>
+                    </div>
+                </div>
+            `;
+            analysisBox.classList.add('show');
         }
 
         window.onload = initApp;
